@@ -1,0 +1,7 @@
+{
+  "name": "opengex",
+  "version": "1.0",
+  "dependencies": [
+    "directxmath"
+  ]
+}
