@@ -35,6 +35,7 @@ import math
 import os
 import struct
 import time
+import numpy as np
 from enum import Enum
 from bpy_extras.io_utils import ExportHelper
 
@@ -585,6 +586,9 @@ class OpenGexExporter(bpy.types.Operator, ExportHelper):
 	def DeindexMesh(mesh, materialTable, shouldExportVertexColor = True):
 
 		mesh.calc_loop_triangles()
+		# TODO: Maybe simplify some stuff
+		# indices = np.empty((len(mesh.loop_triangles) * 3,), dtype=np.int32)
+		# mesh.loop_triangles.foreach_get('loops', indices)
 		# mesh.corner_normals is always available in Blender 4.4
 		vertexArray = mesh.vertices
 		exportVertexArray = []
@@ -2767,7 +2771,7 @@ class OpenGexExporter(bpy.types.Operator, ExportHelper):
 				self.ExportNode(object, scene)
 
 		self.ExportObjects(scene)
-		#self.ExportMaterials()
+		self.ExportMaterials()
 
 		if (self.restoreFrame):
 			scene.frame_set(originalFrame, originalSubframe)
