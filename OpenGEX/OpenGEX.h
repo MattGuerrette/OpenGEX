@@ -14,6 +14,8 @@
 #include "TSOpenDDL.h"
 #include "TSQuaternion.h"
 
+#include <string>
+
 using namespace Terathon;
 
 namespace OpenGEX
@@ -100,6 +102,79 @@ namespace OpenGEX
         kDataOpenGexKeyCountMismatch = 'kycm',
         kDataOpenGexEmptyKeyStructure = 'emky'
     };
+
+    inline std::string DataResultToString(DataResult result)
+    {
+        switch (result)
+        {
+        case kDataOpenGexInvalidUpDirection:
+            return "Invalid up direction";
+        case kDataOpenGexInvalidForwardDirection:
+            return "Invalid forward direction";
+        case kDataOpenGexInvalidTranslationKind:
+            return "Invalid translation kind";
+        case kDataOpenGexInvalidRotationKind:
+            return "Invalid rotation kind";
+        case kDataOpenGexInvalidScaleKind:
+            return "Invalid scale kind";
+        case kDataOpenGexDuplicateLod:
+            return "Duplicate LOD structure";
+        case kDataOpenGexMissingLodSkin:
+            return "Missing LOD skin structure";
+        case kDataOpenGexMissingLodMorph:
+            return "Missing LOD morph structure";
+        case kDataOpenGexDuplicateMorph:
+            return "Duplicate morph structure";
+        case kDataOpenGexUndefinedLightType:
+            return "Undefined light type";
+        case kDataOpenGexUndefinedCurve:
+            return "Undefined curve type";
+        case kDataOpenGexUndefinedAtten:
+            return "Undefined attenuation type";
+        case kDataOpenGexDuplicateVertexArray:
+            return "Duplicate vertex array structure";
+        case kDataOpenGexPositionArrayRequired:
+            return "Position array structure required";
+        case kDataOpenGexVertexCountUnsupported:
+            return "Vertex count unsupported";
+        case kDataOpenGexIndexValueUnsupported:
+            return "Index value unsupported";
+        case kDataOpenGexIndexArrayRequired:
+            return "Index array structure required";
+        case kDataOpenGexVertexCountMismatch:
+            return "Vertex count mismatch";
+        case kDataOpenGexBoneCountMismatch:
+            return "Bone count mismatch";
+        case kDataOpenGexBoneWeightCountMismatch:
+            return "Bone weight count mismatch";
+        case kDataOpenGexInvalidBoneRef:
+            return "Invalid bone reference";
+        case kDataOpenGexInvalidObjectRef:
+            return "Invalid object reference";
+        case kDataOpenGexInvalidMaterialRef:
+            return "Invalid material reference";
+        case kDataOpenGexMaterialIndexUnsupported:
+            return "Material index unsupported";
+        case kDataOpenGexDuplicateMaterialRef:
+            return "Duplicate material reference";
+        case kDataOpenGexMissingMaterialRef:
+            return "Missing material reference";
+        case kDataOpenGexTargetRefNotLocal:
+            return "Target reference not local";
+        case kDataOpenGexInvalidTargetStruct:
+            return "Invalid target structure";
+        case kDataOpenGexInvalidKeyKind:
+            return "Invalid key kind";
+        case kDataOpenGexInvalidCurveType:
+            return "Invalid curve type";
+        case kDataOpenGexKeyCountMismatch:
+            return "Key count mismatch";
+        case kDataOpenGexEmptyKeyStructure:
+            return "Empty key structure";
+        default:
+            return Terathon::DataResultToString(result);
+        }
+    }
 
     class MaterialStructure;
     class ObjectStructure;
