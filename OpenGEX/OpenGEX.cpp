@@ -887,7 +887,7 @@ DataResult NodeStructure::ProcessData(DataDescription* dataDescription)
     }
     else
     {
-        nodeName = nullptr;
+        nodeName.clear();
     }
 
     // Do application-specific node processing here.
@@ -2107,7 +2107,7 @@ DataResult MorphStructure::ProcessData(DataDescription* dataDescription)
         return (result);
     }
 
-    morphName = nullptr;
+    morphName.clear();
 
     const Structure* structure = GetFirstSubnode();
     if (!structure)
