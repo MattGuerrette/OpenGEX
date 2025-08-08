@@ -8,6 +8,8 @@
 
 #include "OpenGEX.h"
 
+#include <utility>
+
 using namespace OpenGEX;
 
 OpenGexStructure::OpenGexStructure(StructureType type) : Structure(type)
@@ -1489,10 +1491,13 @@ IndexArrayStructure::IndexArrayStructure() : OpenGexStructure(kStructureIndexArr
     materialIndex = 0;
     restartIndex = 0;
     frontFace = "ccw";
+    arrayStorage = nullptr;
+    indexArrayData = nullptr;
 }
 
 IndexArrayStructure::~IndexArrayStructure()
 {
+    delete[] arrayStorage;
 }
 
 bool IndexArrayStructure::ValidateProperty(const DataDescription* dataDescription, std::string_view identifier, DataType* type, void** value)
@@ -1549,6 +1554,26 @@ DataResult IndexArrayStructure::ProcessData(DataDescription* dataDescription)
     if (primitiveStructure->GetArraySize() != 3)
     {
         return (kDataInvalidDataFormat);
+    }
+
+    StructureType type = primitiveStructure->GetStructureType();
+
+    if (type == kDataUInt32)
+    {
+        const DataStructure<UInt32DataType>* dataStructure = static_cast<const DataStructure<UInt32DataType>*>(primitiveStructure);
+
+        indexCount = dataStructure->GetDataElementCount();
+
+        const uint32_t* inputData = &dataStructure->GetDataElement(0);
+        uint32_t*       outputData = new uint32_t[indexCount];
+        arrayStorage = reinterpret_cast<char*>(outputData);
+        indexArrayData = arrayStorage;
+
+        for (size_t i = 0; std::cmp_less(i, indexCount); ++i)
+        {
+            outputData[i] = inputData[i];
+            printf("(%u) %u\n", inputData[i], outputData[i]);
+        }
     }
 
     // Do something with the index array here.

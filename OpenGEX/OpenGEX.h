@@ -590,6 +590,10 @@ namespace OpenGEX
         uint64      restartIndex;
         std::string frontFace;
 
+        int32       indexCount;
+        char*       arrayStorage;
+        const void* indexArrayData;
+
     public:
         IndexArrayStructure();
         ~IndexArrayStructure();
@@ -604,9 +608,19 @@ namespace OpenGEX
             return (restartIndex);
         }
 
+        uint32 GetIndexCount(void) const
+        {
+            return indexCount;
+        }
+
         const std::string& GetFrontFace(void) const
         {
             return (frontFace);
+        }
+
+        const void* GetIndexArrayData(void) const
+        {
+            return (indexArrayData);
         }
 
         bool       ValidateProperty(const DataDescription* dataDescription, std::string_view identifier, DataType* type, void** value) override;
