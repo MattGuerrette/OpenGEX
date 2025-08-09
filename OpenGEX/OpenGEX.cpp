@@ -971,6 +971,7 @@ GeometryNodeStructure::GeometryNodeStructure() : NodeStructure(kStructureGeometr
 
 GeometryNodeStructure::~GeometryNodeStructure()
 {
+    morphWeightList.clear();
 }
 
 bool GeometryNodeStructure::ValidateProperty(const DataDescription* dataDescription, std::string_view identifier, DataType* type, void** value)
@@ -1067,7 +1068,7 @@ DataResult GeometryNodeStructure::ProcessData(DataDescription* dataDescription)
         }
         else if (type == kStructureMorphWeight)
         {
-            morphWeightList.AppendListElement(static_cast<MorphWeightStructure*>(structure));
+            morphWeightList.push_back(static_cast<MorphWeightStructure*>(structure));
         }
 
         structure = structure->GetNextSubnode();
@@ -1115,18 +1116,14 @@ const ObjectStructure* GeometryNodeStructure::GetObjectStructure(void) const
 
 const MorphWeightStructure* GeometryNodeStructure::FindMorphWeightStructure(uint32 index) const
 {
-    const MorphWeightStructure* morphWeightStructure = morphWeightList.GetFirstListElement();
-    while (morphWeightStructure)
+    for (const MorphWeightStructure* morphWeightStructure : morphWeightList)
     {
         if (morphWeightStructure->GetMorphIndex() == index)
         {
-            return (morphWeightStructure);
+            return morphWeightStructure;
         }
-
-        morphWeightStructure = morphWeightStructure->GetNextListElement();
     }
-
-    return (nullptr);
+    return nullptr;
 }
 
 LightNodeStructure::LightNodeStructure() : NodeStructure(kStructureLightNode)
@@ -1394,6 +1391,10 @@ DataResult VertexArrayStructure::ProcessData(DataDescription* dataDescription)
     componentCount = arraySize;
     vertexArrayData = data;
 
+    // Parse all primitive data, even if not a known attribString
+    if (arrayStorage)
+        delete[] arrayStorage;
+    arrayStorage = nullptr;
     if (attribString == "position")
     {
         if (arraySize == 3)
@@ -1572,7 +1573,45 @@ DataResult IndexArrayStructure::ProcessData(DataDescription* dataDescription)
         for (size_t i = 0; std::cmp_less(i, indexCount); ++i)
         {
             outputData[i] = inputData[i];
-            printf("(%u) %u\n", inputData[i], outputData[i]);
+        }
+    }
+    else if (type == kDataUInt16)
+    {
+        const DataStructure<UInt16DataType>* dataStructure = static_cast<const DataStructure<UInt16DataType>*>(primitiveStructure);
+        indexCount = dataStructure->GetDataElementCount();
+        const uint16_t* inputData = &dataStructure->GetDataElement(0);
+        uint16_t*       outputData = new uint16_t[indexCount];
+        arrayStorage = reinterpret_cast<char*>(outputData);
+        indexArrayData = arrayStorage;
+        for (size_t i = 0; std::cmp_less(i, indexCount); ++i)
+        {
+            outputData[i] = inputData[i];
+        }
+    }
+    else if (type == kDataUInt8)
+    {
+        const DataStructure<UInt8DataType>* dataStructure = static_cast<const DataStructure<UInt8DataType>*>(primitiveStructure);
+        indexCount = dataStructure->GetDataElementCount();
+        const uint8_t* inputData = &dataStructure->GetDataElement(0);
+        uint8_t*       outputData = new uint8_t[indexCount];
+        arrayStorage = reinterpret_cast<char*>(outputData);
+        indexArrayData = arrayStorage;
+        for (size_t i = 0; std::cmp_less(i, indexCount); ++i)
+        {
+            outputData[i] = inputData[i];
+        }
+    }
+    else if (type == kDataUInt64)
+    {
+        const DataStructure<UInt64DataType>* dataStructure = static_cast<const DataStructure<UInt64DataType>*>(primitiveStructure);
+        indexCount = dataStructure->GetDataElementCount();
+        const uint64_t* inputData = &dataStructure->GetDataElement(0);
+        uint64_t*       outputData = new uint64_t[indexCount];
+        arrayStorage = reinterpret_cast<char*>(outputData);
+        indexArrayData = arrayStorage;
+        for (size_t i = 0; std::cmp_less(i, indexCount); ++i)
+        {
+            outputData[i] = inputData[i];
         }
     }
 
@@ -2161,7 +2200,7 @@ MeshStructure::MeshStructure() : OpenGexStructure(kStructureMesh)
 
 MeshStructure::~MeshStructure()
 {
-    indexArrayList.RemoveAllListElements();
+    indexArrayList.clear();
 }
 
 bool MeshStructure::ValidateProperty(const DataDescription* dataDescription, std::string_view identifier, DataType* type, void** value)
@@ -2215,7 +2254,8 @@ DataResult MeshStructure::ProcessData(DataDescription* dataDescription)
         else if (type == kStructureIndexArray)
         {
             IndexArrayStructure* indexArrayStructure = static_cast<IndexArrayStructure*>(structure);
-            indexArrayList.AppendListElement(indexArrayStructure);
+            // indexArrayList.AppendListElement(indexArrayStructure);
+            indexArrayList.push_back(indexArrayStructure);
 
             // Process index array here.
         }
@@ -3694,7 +3734,7 @@ AnimationStructure::AnimationStructure() : OpenGexStructure(kStructureAnimation)
 
 AnimationStructure::~AnimationStructure()
 {
-    trackList.RemoveAllListElements();
+    trackList.clear();
 }
 
 bool AnimationStructure::ValidateProperty(const DataDescription* dataDescription, std::string_view identifier, DataType* type, void** value)
@@ -3743,7 +3783,8 @@ DataResult AnimationStructure::ProcessData(DataDescription* dataDescription)
         return (result);
     }
 
-    if (trackList.Empty())
+    // if (trackList.Empty()) {
+    if (trackList.empty())
     {
         return (kDataMissingSubstructure);
     }
@@ -3757,16 +3798,12 @@ Range<float> AnimationStructure::GetAnimationTimeRange(void) const
     float min = Math::infinity;
     float max = 0.0F;
 
-    const TrackStructure* trackStructure = trackList.GetFirstListElement();
-    while (trackStructure)
+    for (const TrackStructure* trackStructure : trackList)
     {
         const KeyStructure*                 keyStructure = trackStructure->GetTimeStructure()->GetKeyValueStructure();
         const DataStructure<FloatDataType>* dataStructure = static_cast<DataStructure<FloatDataType>*>(keyStructure->GetFirstSubnode());
-
         min = Fmin(min, dataStructure->GetDataElement(0));
         max = Fmax(max, dataStructure->GetDataElement(dataStructure->GetDataElementCount() - 1));
-
-        trackStructure = trackStructure->GetNextListElement();
     }
 
     if (beginFlag)
@@ -3794,11 +3831,9 @@ void AnimationStructure::UpdateAnimation(const OpenGexDataDescription* dataDescr
         time = Fmin(time, endTime);
     }
 
-    const TrackStructure* trackStructure = trackList.GetFirstListElement();
-    while (trackStructure)
+    for (const TrackStructure* trackStructure : trackList)
     {
         trackStructure->UpdateAnimation(dataDescription, time);
-        trackStructure = trackStructure->GetNextListElement();
     }
 }
 
@@ -3888,7 +3923,7 @@ OpenGexDataDescription::OpenGexDataDescription()
 
 OpenGexDataDescription::~OpenGexDataDescription()
 {
-    animationList.RemoveAllListElements();
+    animationList.clear();
 }
 
 Structure* OpenGexDataDescription::CreateStructure(std::string_view identifier) const
@@ -4177,8 +4212,7 @@ Range<float> OpenGexDataDescription::GetAnimationTimeRange(int32 clip) const
 
     bool animationFlag = false;
 
-    const AnimationStructure* animationStructure = animationList.GetFirstListElement();
-    while (animationStructure)
+    for (const AnimationStructure* animationStructure : animationList)
     {
         if (animationStructure->GetClipIndex() == clip)
         {
@@ -4194,16 +4228,12 @@ Range<float> OpenGexDataDescription::GetAnimationTimeRange(int32 clip) const
                 timeRange = animationStructure->GetAnimationTimeRange();
             }
         }
-
-        animationStructure = animationStructure->GetNextListElement();
     }
-
     if (animationFlag)
     {
         timeRange.min *= timeScale;
         timeRange.max *= timeScale;
     }
-
     return (timeRange);
 }
 
@@ -4211,15 +4241,12 @@ void OpenGexDataDescription::UpdateAnimation(int32 clip, float time) const
 {
     time /= timeScale;
 
-    const AnimationStructure* animationStructure = animationList.GetFirstListElement();
-    while (animationStructure)
+    for (const AnimationStructure* animationStructure : animationList)
     {
         if (animationStructure->GetClipIndex() == clip)
         {
             animationStructure->UpdateAnimation(this, time);
         }
-
-        animationStructure = animationStructure->GetNextListElement();
     }
 
     Structure* structure = GetRootStructure()->GetFirstSubnode();
@@ -4229,7 +4256,6 @@ void OpenGexDataDescription::UpdateAnimation(int32 clip, float time) const
         {
             static_cast<NodeStructure*>(structure)->UpdateNodeTransforms(this);
         }
-
         structure = structure->GetNextSubnode();
     }
 }

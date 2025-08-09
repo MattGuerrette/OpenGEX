@@ -10,11 +10,12 @@
 #define OpenGEX_h
 
 #include "TSColor.h"
-#include "TSList.h"
 #include "TSOpenDDL.h"
 #include "TSQuaternion.h"
 
+#include <list>
 #include <string>
+#include <unordered_map>
 
 using namespace Terathon;
 
@@ -391,7 +392,7 @@ namespace OpenGEX
         void UpdateAnimation(const OpenGexDataDescription* dataDescription, const float* data) override;
     };
 
-    class MorphWeightStructure : public AnimatableStructure, public ListElement<MorphWeightStructure>
+    class MorphWeightStructure : public AnimatableStructure
     {
     private:
         uint32 morphIndex;
@@ -475,7 +476,7 @@ namespace OpenGEX
 
         GeometryObjectStructure*           geometryObjectStructure;
         Array<const MaterialStructure*, 4> materialStructureArray;
-        List<MorphWeightStructure>         morphWeightList;
+        std::list<MorphWeightStructure*>   morphWeightList;
 
         const ObjectStructure* GetObjectStructure(void) const override;
 
@@ -493,6 +494,11 @@ namespace OpenGEX
         DataResult ProcessData(DataDescription* dataDescription) override;
 
         const MorphWeightStructure* FindMorphWeightStructure(uint32 index) const;
+
+        const std::list<MorphWeightStructure*>& GetMorphWeightList() const
+        {
+            return morphWeightList;
+        }
     };
 
     class LightNodeStructure : public NodeStructure
@@ -583,7 +589,7 @@ namespace OpenGEX
         DataResult ProcessData(DataDescription* dataDescription) override;
     };
 
-    class IndexArrayStructure : public OpenGexStructure, public ListElement<IndexArrayStructure>
+    class IndexArrayStructure : public OpenGexStructure
     {
     private:
         uint32      materialIndex;
@@ -789,9 +795,6 @@ namespace OpenGEX
         MorphStructure();
         ~MorphStructure();
 
-        // using MapElement<MorphStructure>::GetPreviousMapElement;
-        // using MapElement<MorphStructure>::GetNextMapElement;
-
         KeyType GetKey(void) const
         {
             return (morphIndex);
@@ -820,11 +823,10 @@ namespace OpenGEX
     class MeshStructure : public OpenGexStructure
     {
     private:
-        uint32      meshLevel;
-        std::string meshPrimitive;
-
-        List<IndexArrayStructure> indexArrayList;
-        SkinStructure*            skinStructure;
+        uint32                          meshLevel;
+        std::string                     meshPrimitive;
+        std::list<IndexArrayStructure*> indexArrayList;
+        SkinStructure*                  skinStructure;
 
     public:
         typedef uint32 KeyType;
@@ -832,15 +834,12 @@ namespace OpenGEX
         MeshStructure();
         ~MeshStructure();
 
-        // using MapElement<MeshStructure>::GetPreviousMapElement;
-        // using MapElement<MeshStructure>::GetNextMapElement;
-
         KeyType GetKey(void) const
         {
             return (meshLevel);
         }
 
-        const List<IndexArrayStructure>* GetIndexArrayList(void) const
+        const std::list<IndexArrayStructure*>* GetIndexArrayList(void) const
         {
             return (&indexArrayList);
         }
@@ -1273,7 +1272,7 @@ namespace OpenGEX
         void UpdateAnimation(const OpenGexDataDescription* dataDescription, int32 index, float param, AnimatableStructure* target) const;
     };
 
-    class TrackStructure : public OpenGexStructure, public ListElement<TrackStructure>
+    class TrackStructure : public OpenGexStructure
     {
     private:
         StructureRef targetRef;
@@ -1313,7 +1312,7 @@ namespace OpenGEX
         void UpdateAnimation(const OpenGexDataDescription* dataDescription, float time) const;
     };
 
-    class AnimationStructure : public OpenGexStructure, public ListElement<AnimationStructure>
+    class AnimationStructure : public OpenGexStructure
     {
     private:
         uint32 clipIndex;
@@ -1323,7 +1322,7 @@ namespace OpenGEX
         float beginTime;
         float endTime;
 
-        List<TrackStructure> trackList;
+        std::list<TrackStructure*> trackList;
 
     public:
         AnimationStructure();
@@ -1336,7 +1335,7 @@ namespace OpenGEX
 
         void AddTrack(TrackStructure* track)
         {
-            trackList.AppendListElement(track);
+            trackList.push_back(track);
         }
 
         bool       ValidateProperty(const DataDescription* dataDescription, std::string_view identifier, DataType* type, void** value) override;
@@ -1380,7 +1379,7 @@ namespace OpenGEX
         bool     colorInitFlag;
         Matrix3D colorMatrix;
 
-        List<AnimationStructure> animationList;
+        std::list<AnimationStructure*> animationList;
 
         DataResult ProcessData(void) override;
 
@@ -1480,10 +1479,10 @@ namespace OpenGEX
 
         void AddAnimation(AnimationStructure* structure)
         {
-            animationList.AppendListElement(structure);
+            animationList.push_back(structure);
         }
 
-        const List<AnimationStructure>* GetAnimationList(void) const
+        const std::list<AnimationStructure*>* GetAnimationList(void) const
         {
             return (&animationList);
         }
