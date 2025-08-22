@@ -6,8 +6,6 @@ option(BUILD_DOCUMENTATION "Build documentation" OFF)
 
 set(CMAKE_CXX_STANDARD 23)
 
-find_package(directxmath CONFIG REQUIRED)
-
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(OpenGEX_External)
 
